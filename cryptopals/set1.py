@@ -93,8 +93,9 @@ def solveRepeatXOR(plain_string,key,insT=False):
     return encode(h,'hex')
 
 res = solveRepeatXOR("Burning 'em, if you ain't quick and nimble","ICE")
-res = solveRepeatXOR("I go crazy when I hear a cymbal","ICE")
-print(res, "IS GOOD")
+res = solveRepeatXOR("I go crazy when I hear a cymbal","ICE",True)
+bres = solveRepeatXOR(res,"ICE",True)
+print(bres, "IS GOOD")
 # different from the website, but true according to https://md5decrypt.net/en/Xor/
 
 """
@@ -147,9 +148,9 @@ def challengeSix():
     ct = 0
     for raw in f:
         # * DO something with each cipher
-        # if(ct > 0):
-        #      break
-        # ct+=1
+        if(ct > 0):
+             break
+        ct+=1
         aList = []
         minDis = 1010101010
         #fStr = base64.b64decode(raw).decode('ascii')
