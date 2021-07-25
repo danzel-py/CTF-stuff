@@ -53,7 +53,7 @@ def sbCipher(hex):
     return res
 
 res = sbCipher("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
-
+print("WOWOW", res)
 """
 * 4. Detect single character XOR
 """
@@ -73,27 +73,28 @@ def detectX():
                     ctr+=1
             somedict[ctr] = res
             maxFreq = max(maxFreq, ctr)
-    return(somedict[maxFreq])
-
-
+    res = somedict[maxFreq]
     f.close()
-    return
+    return res
+
 
 res = detectX() 
 
 """
 * 5. Implement repeating-key XOR
 """
-def solveRepeatXOR(plain_string,key):
+def solveRepeatXOR(plain_string,key,insT=False):
     st = ""
     for i in range(0,len(plain_string)):
         st += chr(ord(plain_string[i])^ord(key[i%len(key)]))
+    if insT:
+        return st
     h = bytes(st, "ascii")
     return encode(h,'hex')
 
 res = solveRepeatXOR("Burning 'em, if you ain't quick and nimble","ICE")
 res = solveRepeatXOR("I go crazy when I hear a cymbal","ICE")
-# print(res)
+print(res, "IS GOOD")
 # different from the website, but true according to https://md5decrypt.net/en/Xor/
 
 """
@@ -107,6 +108,10 @@ def hamming_distance(stra,strb):
     # ^ We don't need bytes object
     a = bin(int.from_bytes(stra.encode(), 'big'))
     b = bin(int.from_bytes(strb.encode(), 'big'))
+    while(len(a) > len(b)):
+        b += "0"
+    while(len(a) < len(b)):
+        a += "0"
     # ^ Now this is binary (bits)
     ct = 0
     for i in range(len(a)):
@@ -115,31 +120,96 @@ def hamming_distance(stra,strb):
     return ct
     # * Returns integer
 
+def getSingleKeyXorOfString(string):
+    somedict = {}
+    ascString = string
+    maxFreq = 0
+    for i in range(0,256):
+        ctr = 0
+        for cjar in ascString:
+            if (ord(cjar)^i > 64 and ord(cjar)^i < 91) or (ord(cjar)^i > 96 and ord(cjar)^i < 123) or (ord(cjar)^i == 32):
+                ctr+=1
+        somedict[i] = ctr
+        maxFreq = max(maxFreq, ctr)
+    
+    key = 0
+    for i in range(0,256):
+        if somedict[i] == maxFreq:
+            key = i
+    res = ""
+    for cjar in ascString:
+        res += chr(ord(cjar)^key)
+    return key
+
 
 def challengeSix():
     f = open("CTF stuff/cryptopals/set1data2.txt")
     ct = 0
     for raw in f:
-        if(ct > 0):
-            break
-        ct+=1
-        for KEYSIZE in range(2,3):
-            #fStr = base64.b64decode(raw).decode('ascii')
-            fStr = base64.b64decode(raw)
-            fLiszt = list(fStr)
+        # * DO something with each cipher
+        # if(ct > 0):
+        #      break
+        # ct+=1
+        aList = []
+        minDis = 1010101010
+        #fStr = base64.b64decode(raw).decode('ascii')
+        fStr = base64.b64decode(raw)
+        fAscii = fStr.decode('ascii')
+        fLiszt = list(fStr)
+        print(fLiszt)
+        for KEYSIZE in range(2,int(len(fLiszt)/2)):
             chungus = [fLiszt[i:i+KEYSIZE] for i in range(0, len(fLiszt), KEYSIZE)]
             a = (chungus[0])
             b = (chungus[1])
             stringA = ""
             stringB = ""
-            for i in range(0,len(a)):
+            for i in range(0,len(b)):
                 stringA += chr(a[i])
                 stringB += chr(b[i])
-            print(stringA)
-            print(stringB)
-            print(hamming_distance(stringA,stringB))
+            # print(stringA)
+            # print(stringB)
+            hd = hamming_distance(stringA,stringB)/KEYSIZE
+            aList.append((hd,KEYSIZE))
 
-            
-    pass
+        sortedList = sorted(aList)
+        # print(sortedList)
+        candidates = []
+        candidates.append(sortedList[0][1])
+        candidates.append(sortedList[1][1])
+        candidates.append(sortedList[2][1])
+        candidates.append(sortedList[3][1])
+        for candidate in candidates:
+            # print(candidate)
+            # transpose
+            blocks = []
+            for i in range(0, candidate):
+                blocks.append([])
+            for i in range(0, len(fLiszt)):
+                blocks[i%candidate].append(fLiszt[i])
+            # print(block)
+            key = ""
+            for block in blocks:
+                str = ""
+                for orz in block:
+                    str+=chr(orz)
+                thisKey = getSingleKeyXorOfString(str)
+                key += chr(thisKey)
+            # print(key, "KEY")
+            # reshexinstring = solveRepeatXOR(fAscii,key)
+            # resstring = decode(reshexinstring, 'hex')
+            resstr = solveRepeatXOR(fAscii,key,True)
+            ctr = 0
+            for cjar in resstr:
+                if (ord(cjar)^i > 64 and ord(cjar)^i < 91) or (ord(cjar)^i > 96 and ord(cjar)^i < 123) or (ord(cjar)^i == 32):
+                    ctr+=1
+            if ctr >= len(resstr)-15:
+                print(resstr)
+            # wow unsolved, :(
+
+
+
+    f.close()
+        
+
 
 challengeSix()
